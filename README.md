@@ -71,7 +71,3 @@ if __name__ == '__main__':
     # Start the async bot
     asyncio.run(bot.polling())
 ```
-
-## License
-
-MIT
