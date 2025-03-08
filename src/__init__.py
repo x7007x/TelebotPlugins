@@ -20,17 +20,8 @@ class TelebotWithPlugins:
         exclude: Optional[List[str]] = None,
         main_dir: Optional[str] = None
     ):
-        """
-        Initialize TelebotWithPlugins
-        
-        Args:
-            bot (TeleBot or AsyncTeleBot): Bot instance from telebot
-            plugins (str): Folder containing plugin files
-            exclude (List[str]): List of filenames to exclude
-            main_dir (str): Path to the main directory, if None the main file path will be used
-        """
         self.bot = bot
-        self.plugins_folder = plugins
+        self.plugins_folder = plugins.replace(".", os.sep) if "." in plugins else plugins
         self.exclude = exclude or []
         
         self.is_async = isinstance(bot, AsyncTeleBot)
@@ -46,19 +37,16 @@ class TelebotWithPlugins:
         self._load_plugins()
         
     def _load_plugins(self):
-        """Load all plugins from the specified plugins folder"""
+        self.plugins_folder = self.plugins_folder.replace("/", os.sep)
+        
         plugins_path = os.path.join(self.main_dir, self.plugins_folder)
         if not os.path.exists(plugins_path):
-            os.makedirs(plugins_path)
-            # Create an empty __init__.py file
+            os.makedirs(plugins_path, exist_ok=True)
             with open(os.path.join(plugins_path, "__init__.py"), "w") as f:
                 pass
             return
         
-        init_path = os.path.join(plugins_path, "__init__.py")
-        if not os.path.exists(init_path):
-            with open(init_path, "w") as f:
-                pass
+        self._ensure_init_files(plugins_path)
         
         if self.main_dir not in sys.path:
             sys.path.insert(0, self.main_dir)
@@ -73,5 +61,21 @@ class TelebotWithPlugins:
                     try:
                         importlib.import_module(module_path)
                         loaded_plugins += 1
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        print(f"Error loading plugin {module_path}: {str(e)}")
+    
+    def _ensure_init_files(self, root_path):
+        init_path = os.path.join(root_path, "__init__.py")
+        if not os.path.exists(init_path):
+            with open(init_path, "w") as f:
+                pass
+        
+        parts = self.plugins_folder.split(os.sep)
+        current_path = self.main_dir
+        
+        for part in parts:
+            current_path = os.path.join(current_path, part)
+            init_file = os.path.join(current_path, "__init__.py")
+            if os.path.isdir(current_path) and not os.path.exists(init_file):
+                with open(init_file, "w") as f:
+                    pass
