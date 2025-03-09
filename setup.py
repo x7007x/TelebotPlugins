@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="telebot-plugins",
-    version="0.1.2",
+    version="0.1.3",
     author="Ahmed Negm",
     author_email="A7medNegm.x@gmail.com",
     description="A simple plugin system for pyTelegramBotAPI (telebot)",
